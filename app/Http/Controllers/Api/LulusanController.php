@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Lulusan;
 use App\Services\LulusanImporter;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class LulusanController extends Controller
 {
@@ -71,8 +72,14 @@ class LulusanController extends Controller
         $uploaded = $request->file('file');
         // Simpan sementara dulu ke disk lokal, PhpSpreadsheet butuh path
         // file asli di server (tidak bisa baca langsung dari UploadedFile).
+        //
+        // PENTING: pakai Storage::path(), JANGAN rakit path manual lewat
+        // storage_path('app/'.$path) — sejak Laravel 11/12, root disk
+        // 'local' default-nya storage/app/private (bukan storage/app
+        // lagi), jadi path manual begitu akan salah dan file-nya "tidak
+        // ketemu" walau sebenarnya tersimpan.
         $path = $uploaded->store('tmp-lulusan-import');
-        $fullPath = storage_path('app/' . $path);
+        $fullPath = Storage::path($path);
 
         try {
             $hasil = $importer->import($fullPath);

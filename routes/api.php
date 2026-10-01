@@ -89,6 +89,7 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 
     Route::get('/lulusan/stats', [LulusanController::class, 'stats']);
+    Route::post('/lulusan/import', [LulusanController::class, 'import']);
     Route::get('/lulusan', [LulusanController::class, 'index']);
 
 });
