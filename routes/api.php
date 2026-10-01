@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\ActivityLogController;
 use App\Http\Controllers\Api\AnalyticsController;
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\LulusanController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\LandingPageController;
 use Illuminate\Support\Facades\Route;
@@ -86,4 +87,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::middleware('permission:pesan,delete')->group(function () {
         Route::delete('/pesan/{pesan}', [LandingPageController::class, 'destroyPesan']);
     });
+
+    Route::get('/lulusan/stats', [LulusanController::class, 'stats']);
+    Route::get('/lulusan', [LulusanController::class, 'index']);
+
 });
+
