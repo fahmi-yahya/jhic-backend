@@ -3,7 +3,7 @@
 use App\Http\Controllers\Api\ActivityLogController;
 use App\Http\Controllers\Api\AnalyticsController;
 use App\Http\Controllers\Api\AuthController;
-use App\Http\Controllers\Api\LulusanController;
+use App\Http\Controllers\Api\BkkController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\LandingPageController;
 use Illuminate\Support\Facades\Route;
@@ -16,6 +16,12 @@ Route::post('/login', [AuthController::class, 'login'])
 // Publik: form kontak di landing page, TIDAK perlu login. Dibatasi rate
 // biar tidak dispam.
 Route::post('/pesan', [LandingPageController::class, 'storePesan'])
+    ->middleware('throttle:10,1');
+
+// Publik: form pengajuan lowongan BKK dari perusahaan, TIDAK perlu login.
+// Statusnya otomatis "pending" sampai di-review BK lewat endpoint di
+// bawah (dalam grup auth:sanctum + permission:bkk,edit).
+Route::post('/bkk', [BkkController::class, 'store'])
     ->middleware('throttle:10,1');
 
 Route::middleware('auth:sanctum')->group(function () {
@@ -88,9 +94,16 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::delete('/pesan/{pesan}', [LandingPageController::class, 'destroyPesan']);
     });
 
-    Route::get('/lulusan/stats', [LulusanController::class, 'stats']);
-    Route::post('/lulusan/import', [LulusanController::class, 'import']);
-    Route::get('/lulusan', [LulusanController::class, 'index']);
-
+    // BKK — hanya BK/admin yang punya izin modul "bkk" yang bisa lihat
+    // daftar pengajuan dan meng-approve/reject. storePublic sengaja di
+    // LUAR grup ini (lihat di atas, tanpa auth).
+    Route::middleware('permission:bkk,view')->group(function () {
+        Route::get('/bkk', [BkkController::class, 'index']);
+    });
+    Route::middleware('permission:bkk,edit')->group(function () {
+        Route::put('/bkk/{bkk}/status', [BkkController::class, 'updateStatus']);
+    });
+    Route::middleware('permission:bkk,delete')->group(function () {
+        Route::delete('/bkk/{bkk}', [BkkController::class, 'destroy']);
+    });
 });
-
