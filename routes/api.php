@@ -4,6 +4,10 @@ use App\Http\Controllers\Api\ActivityLogController;
 use App\Http\Controllers\Api\AnalyticsController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\BkkController;
+use App\Http\Controllers\Api\BludPencapaianController;
+use App\Http\Controllers\Api\BludProdukController;
+use App\Http\Controllers\Api\BludStatistikController;
+use App\Http\Controllers\Api\LulusanController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\LandingPageController;
 use Illuminate\Support\Facades\Route;
@@ -23,6 +27,24 @@ Route::post('/pesan', [LandingPageController::class, 'storePesan'])
 // bawah (dalam grup auth:sanctum + permission:bkk,edit).
 Route::post('/bkk', [BkkController::class, 'store'])
     ->middleware('throttle:10,1');
+
+// Publik: daftar lowongan BKK yang SUDAH di-approve, ditampilkan di
+// landing page (#lowongan) — beda dari GET /api/bkk di bawah (admin,
+// wajib login + permission bkk,view) yang menampilkan SEMUA status untuk
+// direview. Query "status" dipaksa "approved" di sini, apa pun yang
+// dikirim caller, supaya pengunjung publik tidak bisa lihat lowongan
+// pending/rejected lewat endpoint ini.
+Route::get('/bkk/public', function (\Illuminate\Http\Request $request) {
+    $request->merge(['status' => 'approved']);
+    return app(BkkController::class)->index($request);
+})->middleware('throttle:60,1');
+
+// Publik: ringkasan statistik lulusan (Tracer Study) buat landing page.
+// Aman dibuka tanpa login karena LulusanController::stats() cuma balikin
+// angka agregat per kategori/tahun — TIDAK ada NISN/nama/data pribadi
+// siswa di dalamnya (itu tetap di GET /api/lulusan yang terkunci login).
+Route::get('/lulusan/stats/public', [LulusanController::class, 'stats'])
+    ->middleware('throttle:60,1');
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
@@ -105,5 +127,45 @@ Route::middleware('auth:sanctum')->group(function () {
     });
     Route::middleware('permission:bkk,delete')->group(function () {
         Route::delete('/bkk/{bkk}', [BkkController::class, 'destroy']);
+    });
+
+    // Lulusan — stats & daftar (dengan pagination) butuh izin lihat modul
+    // "lulusan"; import Excel butuh izin edit. Daftarkan juga modul
+    // "lulusan" ini di MODULES/ROLE_TEMPLATES management.jsx kalau mau
+    // Admin/Jurusan bisa diberi akses (superadmin otomatis bisa semua).
+    Route::middleware('permission:lulusan,view')->group(function () {
+        Route::get('/lulusan/stats', [LulusanController::class, 'stats']);
+        Route::get('/lulusan', [LulusanController::class, 'index']);
+    });
+    Route::middleware('permission:lulusan,edit')->group(function () {
+        Route::post('/lulusan/import', [LulusanController::class, 'import']);
+    });
+
+    // BLUD — Statistik (singleton), Pencapaian/kerja sama, Produk & Jasa.
+    Route::middleware('permission:statistik,view')->group(function () {
+        Route::get('/statistik', [BludStatistikController::class, 'show']);
+    });
+    Route::middleware('permission:statistik,edit')->group(function () {
+        Route::put('/statistik', [BludStatistikController::class, 'update']);
+    });
+
+    Route::middleware('permission:pencapaian,view')->group(function () {
+        Route::get('/pencapaian', [BludPencapaianController::class, 'index']);
+    });
+    Route::middleware('permission:pencapaian,edit')->group(function () {
+        Route::post('/pencapaian', [BludPencapaianController::class, 'store']);
+    });
+    Route::middleware('permission:pencapaian,delete')->group(function () {
+        Route::delete('/pencapaian/{pencapaian}', [BludPencapaianController::class, 'destroy']);
+    });
+
+    Route::middleware('permission:produk,view')->group(function () {
+        Route::get('/produk', [BludProdukController::class, 'index']);
+    });
+    Route::middleware('permission:produk,edit')->group(function () {
+        Route::post('/produk', [BludProdukController::class, 'store']);
+    });
+    Route::middleware('permission:produk,delete')->group(function () {
+        Route::delete('/produk/{produk}', [BludProdukController::class, 'destroy']);
     });
 });
