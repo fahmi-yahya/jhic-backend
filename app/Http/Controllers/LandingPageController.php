@@ -241,7 +241,7 @@ class LandingPageController extends Controller
             'lomba_diikuti' => "required",
             'judul_prestasi' => "required",
             'tanggal_terbit' => "required|date_format:Y-m-d",
-            'img_prestasi' => "required|image|mimes:jpg.png,jpeg"
+            'img_prestasi' => "required|image|mimes:jpg,jpeg,png,webp|max:2048"
         ]);
 
         $path = $request->file('img_prestasi')->store('img_prestasi', 'public');
@@ -341,5 +341,75 @@ class LandingPageController extends Controller
         );
 
         return response()->json(['message' => 'Pesan dihapus.']);
+    }
+
+     private function publicImageUrl(?string $path): ?string
+    {
+        return $path ? asset('storage/' . ltrim($path, '/')) : null;
+    }
+
+    private function publicDate($value): ?string
+    {
+        if ($value instanceof \DateTimeInterface) {
+            return $value->format('Y-m-d');
+        }
+
+        return $value ? (string) $value : null;
+    }
+
+    // GET /api/berita/public
+    public function publicBerita()
+    {
+        $items = Berita::query()
+            ->orderByDesc('tanggal_terbit')
+            ->orderByDesc('id')
+            ->limit(20)
+            ->get()
+            ->map(fn ($b) => [
+                'id'             => $b->id,
+                'judul_berita'   => $b->judul_berita,
+                'penulis'        => $b->penulis,
+                'deskripsi'      => $b->deskripsi,
+                'tanggal_terbit' => $this->publicDate($b->tanggal_terbit),
+                'image_url'      => $this->publicImageUrl($b->image),
+            ]);
+
+        return response()->json($items);
+    }
+
+    // GET /api/prestasi/public
+    public function publicPrestasi()
+    {
+        $items = Prestasi::query()
+            ->orderByDesc('tanggal_terbit')
+            ->orderByDesc('id')
+            ->limit(20)
+            ->get()
+            ->map(fn ($p) => [
+                'id'             => $p->id,
+                'nama_siswa'     => $p->nama_siswa,
+                'lomba_diikuti'  => $p->lomba_diikuti,
+                'judul_prestasi' => $p->judul_prestasi,
+                'tanggal_terbit' => $this->publicDate($p->tanggal_terbit),
+                'image_url'      => $this->publicImageUrl($p->img_prestasi),
+            ]);
+
+        return response()->json($items);
+    }
+
+    // GET /api/jurusan/public
+    public function publicJurusan()
+    {
+        $items = Jurusan::query()
+            ->orderBy('id')
+            ->get()
+            ->map(fn ($j) => [
+                'id'           => $j->id,
+                'nama_jurusan' => $j->nama_jurusan,
+                'deskripsi'    => $j->deskripsi,
+                'image_url'    => $this->publicImageUrl($j->img_jurusan),
+            ]);
+
+        return response()->json($items);
     }
 }

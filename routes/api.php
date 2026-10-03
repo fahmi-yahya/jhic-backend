@@ -5,12 +5,34 @@ use App\Http\Controllers\Api\AnalyticsController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\BkkController;
 use App\Http\Controllers\Api\BludPencapaianController;
+use App\Http\Controllers\Api\BludPesanController;
 use App\Http\Controllers\Api\BludProdukController;
 use App\Http\Controllers\Api\BludStatistikController;
 use App\Http\Controllers\Api\LulusanController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\LandingPageController;
 use Illuminate\Support\Facades\Route;
+
+Route::get('/statistik/public', [BludStatistikController::class, 'show'])
+    ->middleware('throttle:60,1');
+
+Route::get('/pencapaian/public', [BludPencapaianController::class, 'index'])
+    ->middleware('throttle:60,1');
+
+Route::get('/produk/public', [BludProdukController::class, 'index'])
+    ->middleware('throttle:60,1');
+
+// Publik: konten landing page (Berita, Prestasi, Jurusan). Read-only, hanya
+// field yang aman ditampilkan ke pengunjung (tanpa data admin).
+Route::get('/berita/public', [LandingPageController::class, 'publicBerita'])
+    ->middleware('throttle:60,1');
+
+Route::get('/prestasi/public', [LandingPageController::class, 'publicPrestasi'])
+    ->middleware('throttle:60,1');
+
+Route::get('/jurusan/public', [LandingPageController::class, 'publicJurusan'])
+    ->middleware('throttle:60,1');
+
 
 // Dibatasi 5 percobaan per menit per IP untuk mencegah brute-force,
 // meski captcha sudah ada sebagai lapisan pertama.
@@ -19,7 +41,7 @@ Route::post('/login', [AuthController::class, 'login'])
 
 // Publik: form kontak di landing page, TIDAK perlu login. Dibatasi rate
 // biar tidak dispam.
-Route::post('/pesan', [LandingPageController::class, 'storePesan'])
+Route::post('/pesan', [BludPesanController::class, 'storePesan'])
     ->middleware('throttle:10,1');
 
 // Publik: form pengajuan lowongan BKK dari perusahaan, TIDAK perlu login.
@@ -45,6 +67,7 @@ Route::get('/bkk/public', function (\Illuminate\Http\Request $request) {
 // siswa di dalamnya (itu tetap di GET /api/lulusan yang terkunci login).
 Route::get('/lulusan/stats/public', [LulusanController::class, 'stats'])
     ->middleware('throttle:60,1');
+
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
@@ -110,10 +133,11 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 
     Route::middleware('permission:pesan,view')->group(function () {
-        Route::get('/pesan', [LandingPageController::class, 'indexPesan']);
+        Route::get('/pesan', [BludPesanController::class, 'indexPesan']);
+        Route::put('/pesan/{pesan}/baca', [BludPesanController::class, 'tandaiDibaca']);
     });
     Route::middleware('permission:pesan,delete')->group(function () {
-        Route::delete('/pesan/{pesan}', [LandingPageController::class, 'destroyPesan']);
+        Route::delete('/pesan/{pesan}', [BludPesanController::class, 'destroyPesan']);
     });
 
     // BKK — hanya BK/admin yang punya izin modul "bkk" yang bisa lihat
