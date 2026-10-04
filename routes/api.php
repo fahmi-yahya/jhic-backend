@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\BludPencapaianController;
 use App\Http\Controllers\Api\BludPesanController;
 use App\Http\Controllers\Api\BludProdukController;
 use App\Http\Controllers\Api\BludStatistikController;
+use App\Http\Controllers\Api\KisahAlumniController;
 use App\Http\Controllers\Api\LulusanController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\LandingPageController;
@@ -38,6 +39,14 @@ Route::get('/jurusan/public', [LandingPageController::class, 'publicJurusan'])
 // meski captcha sudah ada sebagai lapisan pertama.
 Route::post('/login', [AuthController::class, 'login'])
     ->middleware('throttle:5,1');
+
+// Publik: pendaftaran akun baru (otomatis login, tanpa hak akses modul).
+Route::post('/register', [AuthController::class, 'register'])
+    ->middleware('throttle:5,1');
+
+// Publik: kisah sukses alumni yang SUDAH disetujui admin (landing BKK).
+Route::get('/kisah-alumni/public', [KisahAlumniController::class, 'publicIndex'])
+    ->middleware('throttle:60,1');
 
 // Publik: form kontak di landing page, TIDAK perlu login. Dibatasi rate
 // biar tidak dispam.
@@ -72,6 +81,10 @@ Route::get('/lulusan/stats/public', [LulusanController::class, 'stats'])
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/me', [AuthController::class, 'me']);
+
+    // Alumni/pengguna yang sudah login boleh mengirim kisah (menunggu persetujuan).
+    Route::post('/kisah-alumni', [KisahAlumniController::class, 'store'])
+        ->middleware('throttle:5,1');
 
     Route::get('/activity-logs', [ActivityLogController::class, 'index']);
 
@@ -145,12 +158,15 @@ Route::middleware('auth:sanctum')->group(function () {
     // LUAR grup ini (lihat di atas, tanpa auth).
     Route::middleware('permission:bkk,view')->group(function () {
         Route::get('/bkk', [BkkController::class, 'index']);
+        Route::get('/kisah-alumni', [KisahAlumniController::class, 'index']);
     });
     Route::middleware('permission:bkk,edit')->group(function () {
         Route::put('/bkk/{bkk}/status', [BkkController::class, 'updateStatus']);
+        Route::put('/kisah-alumni/{kisahAlumni}/status', [KisahAlumniController::class, 'updateStatus']);
     });
     Route::middleware('permission:bkk,delete')->group(function () {
         Route::delete('/bkk/{bkk}', [BkkController::class, 'destroy']);
+        Route::delete('/kisah-alumni/{kisahAlumni}', [KisahAlumniController::class, 'destroy']);
     });
 
     // Lulusan — stats & daftar (dengan pagination) butuh izin lihat modul
