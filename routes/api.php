@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\BludProdukController;
 use App\Http\Controllers\Api\BludStatistikController;
 use App\Http\Controllers\Api\KisahAlumniController;
 use App\Http\Controllers\Api\LulusanController;
+use App\Http\Controllers\Api\MemberAuthController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\LandingPageController;
 use Illuminate\Support\Facades\Route;
@@ -33,6 +34,17 @@ Route::get('/prestasi/public', [LandingPageController::class, 'publicPrestasi'])
 
 Route::get('/jurusan/public', [LandingPageController::class, 'publicJurusan'])
     ->middleware('throttle:60,1');
+
+
+Route::post('/member/register', [MemberAuthController::class, 'register'])
+    ->middleware('throttle:5,1');
+Route::post('/member/login', [MemberAuthController::class, 'login'])
+    ->middleware('throttle:5,1');
+
+Route::middleware('auth:member')->group(function () {
+    Route::post('/member/logout', [MemberAuthController::class, 'logout']);
+    Route::get('/member/me', [MemberAuthController::class, 'me']);
+});
 
 
 // Dibatasi 5 percobaan per menit per IP untuk mencegah brute-force,

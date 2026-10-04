@@ -13,6 +13,38 @@ return [
     |
     */
 
+
+    'guards' => [
+        // ... guard 'web' dan lainnya yang sudah ada tetap di sini, jangan dihapus ...
+        'web' => [
+            'driver' => 'session',
+            'provider' => 'users',
+        ],
+
+        'member' => [
+            'driver' => 'session',
+            'provider' => 'alumni',
+        ],
+    ],
+
+    // ============================================================
+// TAMBAHKAN ini ke dalam array 'providers' yang SUDAH ADA:
+// ============================================================
+
+    'providers' => [
+        // ... provider 'users' dan lainnya yang sudah ada tetap di sini ...
+        'users' => [
+            'driver' => 'eloquent',
+            'model' => env('AUTH_MODEL', App\Models\User::class),
+        ],
+
+        'alumni' => [
+            'driver' => 'eloquent',
+            'model' => App\Models\Alumni::class,
+        ],
+    ],
+
+
     'defaults' => [
         'guard' => env('AUTH_GUARD', 'web'),
         'passwords' => env('AUTH_PASSWORD_BROKER', 'users'),
@@ -35,12 +67,6 @@ return [
     |
     */
 
-    'guards' => [
-        'web' => [
-            'driver' => 'session',
-            'provider' => 'users',
-        ],
-    ],
 
     /*
     |--------------------------------------------------------------------------
@@ -58,18 +84,6 @@ return [
     | Supported: "database", "eloquent"
     |
     */
-
-    'providers' => [
-        'users' => [
-            'driver' => 'eloquent',
-            'model' => env('AUTH_MODEL', App\Models\User::class),
-        ],
-
-        // 'users' => [
-        //     'driver' => 'database',
-        //     'table' => 'users',
-        // ],
-    ],
 
     /*
     |--------------------------------------------------------------------------
