@@ -13,7 +13,7 @@ return [
     |
     */
 
-    
+
 
     'paths' => ['api/*', 'sanctum/csrf-cookie'],
 
@@ -23,7 +23,7 @@ return [
     // jadi http:// dan https:// dihitung beda, harus dua-duanya didaftarkan
     // kalau dua-duanya dipakai akses situsnya.
     'allowed_origins' => [
-        'http://blud.timevali.my.id',
+        'https://bkk.timevali.my.id',
         'https://blud.timevali.my.id',
     ],
 
