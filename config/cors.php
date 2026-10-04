@@ -25,6 +25,7 @@ return [
     'allowed_origins' => [
         'https://bkk.timevali.my.id',
         'https://blud.timevali.my.id',
+        'https://adminpanel.timevali.my.id'
     ],
 
     // Ini KHUSUS buat pola/regex (match banyak origin sekaligus, mis. semua
