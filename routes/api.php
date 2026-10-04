@@ -44,6 +44,12 @@ Route::post('/member/login', [MemberAuthController::class, 'login'])
 Route::middleware('auth:member')->group(function () {
     Route::post('/member/logout', [MemberAuthController::class, 'logout']);
     Route::get('/member/me', [MemberAuthController::class, 'me']);
+
+    // Member yang sudah login boleh mengirim kisah (status "pending" sampai
+    // disetujui admin). Harus di grup auth:member karena pengirimnya member,
+    // bukan admin (auth:sanctum).
+    Route::post('/kisah-alumni', [KisahAlumniController::class, 'store'])
+        ->middleware('throttle:5,1');
 });
 
 
@@ -93,10 +99,6 @@ Route::get('/lulusan/stats/public', [LulusanController::class, 'stats'])
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/me', [AuthController::class, 'me']);
-
-    // Alumni/pengguna yang sudah login boleh mengirim kisah (menunggu persetujuan).
-    Route::post('/kisah-alumni', [KisahAlumniController::class, 'store'])
-        ->middleware('throttle:5,1');
 
     Route::get('/activity-logs', [ActivityLogController::class, 'index']);
 
